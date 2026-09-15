@@ -5,7 +5,7 @@ IFS=$'\n\t'
 # Start Chrome with configured Google profile and CDP debugging
 # Edit the variables below to match your setup, then run BEFORE the MCP server
 
-CHROME="/opt/google/chrome/chrome"
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 USER_DATA_DIR="$HOME/.config/google-chrome"
 PROFILE="Profile 3"
 CDP_PORT=9222

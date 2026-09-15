@@ -46,7 +46,9 @@ export async function connectToBrowser(options = {}) {
 }
 
 async function launchNewBrowser(cdpPort, options = {}) {
-  const chromePath = options.chromePath || '/opt/google/chrome/chrome';
+  const chromePath = options.chromePath || get('chromePath', process.platform === 'darwin'
+    ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    : '/opt/google/chrome/chrome');
   const profileDir = options.profileDir || path.resolve(import.meta.dirname, '../../chrome-profile-kiara');
 
   if (!fs.existsSync(chromePath)) {
@@ -100,10 +102,15 @@ async function launchNewBrowser(cdpPort, options = {}) {
  * launches Chrome via shell, then connects Playwright via CDP.
  */
 export async function launchChromeDirect(options = {}) {
-  const chromePath = options.chromePath || '/opt/google/chrome/chrome';
+  const chromePath = options.chromePath || get('chromePath', process.platform === 'darwin'
+    ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    : '/opt/google/chrome/chrome');
   const cdpPort = options.cdpPort || get('cdpPort', 9222);
   const headless = options.headless ?? get('headless', false);
-  const profileSource = options.profileSource || path.resolve(process.env.HOME, '.config/google-chrome/Profile 3');
+  const profileSource = options.profileSource || path.join(
+    get('chromeUserDataDir', path.resolve(process.env.HOME, '.config/google-chrome')),
+    get('chromeProfile', 'Profile 3'));
+  const profileName = path.basename(profileSource);
 
   if (isConnected && page) {
     logger.info('Already connected, reusing browser');
@@ -119,7 +126,7 @@ export async function launchChromeDirect(options = {}) {
 
   const localStateSrc = path.resolve(path.dirname(profileSource), '../Local State');
   if (fs.existsSync(profileSource)) {
-    fs.cpSync(profileSource, path.join(tempDir, 'Profile 3'), { recursive: true });
+    fs.cpSync(profileSource, path.join(tempDir, profileName), { recursive: true });
   }
   if (fs.existsSync(localStateSrc)) {
     fs.cpSync(localStateSrc, path.join(tempDir, 'Local State'));
@@ -138,7 +145,7 @@ export async function launchChromeDirect(options = {}) {
   const args = [
     `--remote-debugging-port=${cdpPort}`,
     `--user-data-dir=${tempDir}`,
-    '--profile-directory=Profile 3',
+    `--profile-directory=${profileName}`,
     '--no-first-run', '--no-default-browser-check',
     '--disable-blink-features=AutomationControlled',
     '--window-size=1920,1080',
